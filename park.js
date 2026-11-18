@@ -11,7 +11,7 @@ function tube(S,a,b,r,mat,res=.14){S.tube([a,b],r,r,mat,{res});}
 function path(S,pts,r,mat,res=.14){S.tube(pts,r,r,mat,{res});}
 function island(S){box(S,[0,-.33,0],[5,.33,4],stone,.24);box(S,[0,.02,0],[4.9,.04,3.9],grass,.25);box(S,[0,.09,2.9],[4.7,.06,.65],stone,.22);for(let i=-4;i<=4;i+=2){tube(S,[i,.1,3.5],[i,1.2,3.5],.07,stone);ball(S,[i,1.25,3.5],.15,lamp);}}
 function tree(S,x,z){tube(S,[x,.1,z],[x,1,z],.13,stone);ball(S,[x,1.3,z],.55,grass,.19);}
-function finish(B,parts,cam){const W=B.finish({cam,detail:14,dither:.25});const orig=W.data.slice();let speed=1,phase=0;W.anim={update(dt){phase+=dt*speed;for(const part of parts){const pos=part.at(phase);for(let i=part.start;i<part.end;i++){let j=i*16;W.data[j]=orig[j]+pos[0];W.data[j+1]=orig[j+1]+pos[1];W.data[j+2]=orig[j+2]+pos[2];}}},poke(){speed=speed===1?2.5:1;},setSpeed(v){speed=v;},get phase(){return phase;}};return W;}
+function finish(B,parts,cam){const W=B.finish({cam,detail:14,dither:.25});const orig=W.data.slice();let speed=1,phase=0;W.anim={update(dt){phase+=dt*speed;for(const part of parts){if(part.morph){part.morph(W.data,orig,phase);continue;}const pos=part.at(phase);for(let i=part.start;i<part.end;i++){let j=i*16;W.data[j]=orig[j]+pos[0];W.data[j+1]=orig[j+1]+pos[1];W.data[j+2]=orig[j+2]+pos[2];}}},poke(){speed=speed===1?2.5:1;},setSpeed(v){speed=v;},get phase(){return phase;}};return W;}
 function ridePart(B,S,parts,draw,at){const start=B.count();draw();S.bake();const end=B.count();parts.push({start,end,at});}
 function coaster(seed){const {B,S}=base(seed),parts=[];island(S);for(const x of [-4,4])for(const z of [-2,1])tree(S,x,z);const at=a=>[3.55*Math.cos(a),2.1+1.25*Math.sin(a*2+.3),2.15*Math.sin(a)];const pts=Array.from({length:65},(_,i)=>at(i*TAU/64));path(S,pts,.15,red,.17);path(S,pts.map(p=>[p[0]*.91,p[1]-.2,p[2]*.91]),.1,gold,.17);for(let i=0;i<16;i++){const p=at(i*TAU/16);tube(S,[p[0],.12,p[2]],p,.12,stone,.2);}box(S,[0,.5,2.3],[1.1,.5,.55],blue);box(S,[0,1.1,2.3],[1.3,.15,.72],gold);S.bake();for(let i=0;i<3;i++){const a=-i*.24,p=at(a);ridePart(B,S,parts,()=>{box(S,[p[0],p[1]+.25,p[2]],[.27,.18,.3],gold,.1);ball(S,[p[0],p[1]+.52,p[2]],.13,purple,.1);},t=>at(t*.8+a).map((v,k)=>v-p[k]));}const W=finish(B,parts,{target:[0,1.6,0],dist:15,pitch:.38,yaw:.65});W.rideCamera=()=>{const a=W.anim.phase*.8,p=at(a),q=at(a+.13);return {eye:[p[0],p[1]+.72,p[2]],target:[q[0],q[1]+.72,q[2]]};};return W;}
 function wheel(seed){const {B,S}=base(seed),parts=[];island(S);const y=3.15,z=-.4,R=2.55;for(const x of [-1.7,1.7])tube(S,[x,.1,z+.8],[0,y,z],.22,blue);tube(S,[0,.1,z-.8],[0,y,z],.24,stone);const p=a=>[R*Math.cos(a),y+R*Math.sin(a),z];const ring=Array.from({length:49},(_,i)=>p(i*TAU/48));path(S,ring,.13,gold,.14);for(let i=0;i<12;i++)tube(S,[0,y,z],p(i*TAU/12),.065,stone,.18);ball(S,[0,y,z],.4,red);for(const x of [-4,4])tree(S,x,-2);S.bake();for(let i=0;i<8;i++){const a=i*TAU/8,o=p(a);ridePart(B,S,parts,()=>{box(S,[o[0],o[1]-.25,z],[.35,.28,.32],i%2?red:blue,.12);box(S,[o[0],o[1]+.08,z],[.42,.08,.39],gold,.12);},t=>p(a+t*.3).map((v,k)=>v-o[k]));}return finish(B,parts,{target:[0,2.6,0],dist:16,pitch:.18,yaw:.24});}
@@ -21,6 +21,31 @@ function park(seed){const {B,S}=base(seed),parts=[];box(S,[0,-.3,0],[11,.3,10],g
 const a=gates[0];const track=Array.from({length:33},(_,i)=>{const t=i*TAU/32;return [a.x+2.5*Math.cos(t),1.6+.7*Math.sin(t*2),a.z+1.9*Math.sin(t)];});path(S,track,.16,red,.2);for(let i=0;i<32;i+=4)tube(S,[track[i][0],.1,track[i][2]],track[i],.1,stone,.22);
 const b=gates[1],p=t=>[b.x+2*Math.cos(t),2.6+2*Math.sin(t),b.z];path(S,Array.from({length:33},(_,i)=>p(i*TAU/32)),.15,gold,.18);for(let i=0;i<8;i++){const q=p(i*TAU/8);tube(S,[b.x,2.6,b.z],q,.07,blue,.19);ball(S,q,.25,red,.13);}tube(S,[b.x,.1,b.z],[b.x,2.6,b.z],.18,stone);
 const d=gates[2];box(S,[d.x,1.1,d.z],[1.8,1.1,1.1],purple,.23);for(const dx of [-1.8,1.8]){tube(S,[d.x+dx,.1,d.z],[d.x+dx,2.8,d.z],.45,stone,.22);ball(S,[d.x+dx,2.9,d.z],.55,gold,.19);}tube(S,[d.x,2,d.z],[d.x,3.6,d.z],.22,purple);ball(S,[d.x,3.7,d.z],.2,lamp);
-const e=gates[3];for(let i=0;i<7;i++){const x=e.x+(i%3-1)*1.05,z=e.z+Math.floor(i/3)*.85-1;ball(S,[x,1,z],[.85,1.2,.85],blue,.23);ball(S,[x,2.1,z],.3,purple,.14);}box(S,[e.x,.6,e.z+1.7],[.65,.6,.15],purple,.17);for(let x=-9;x<=9;x+=3){tree(S,x,-9);tree(S,x,9);}S.bake();const W=finish(B,parts,{target:[0,0,0],dist:32,pitch:.65,yaw:.45});W.gates=gates;return W;}
-window.PARK_SCENES=[{id:'park',name:'🗺️ Splattastic Park',seed:11,build:park},{id:'dark',name:'💎 Crystal Caverns',seed:10,build:dark},{id:'coaster',name:'🎢 Thunder Trail',seed:7,build:coaster},{id:'wheel',name:'🎡 Starlight Wheel',seed:8,build:wheel},{id:'castle',name:'🏰 Fireworks Kingdom',seed:9,build:castle}];
+const e=gates[3];for(let i=0;i<7;i++){const x=e.x+(i%3-1)*1.05,z=e.z+Math.floor(i/3)*.85-1;ball(S,[x,1,z],[.85,1.2,.85],blue,.23);ball(S,[x,2.1,z],.3,purple,.14);}box(S,[e.x,.6,e.z+1.7],[.65,.6,.15],purple,.17);for(let x=-9;x<=9;x+=3){tree(S,x,-9);tree(S,x,9);}S.bake();morpho(B,parts,[0,2.1,0],.48,0);morpho(B,parts,[0,1.8,4],.35,2);const W=finish(B,parts,{target:[0,0,0],dist:32,pitch:.65,yaw:.45});W.gates=gates;return W;}
+/* Original procedural blue morpho, not the linked photographic scan. */
+function morpho(B,parts,origin,scale=1,offset=0){
+const start=B.count(),colors=[1,15,14,3,4],hinges=[];
+function emit(x,y,z,r,c,side){B.iso(x,y,z,r,B.P[c],3,{em:true});hinges.push(side);}
+for(const side of [-1,1]){
+for(let i=0;i<=40;i++)for(let j=0;j<=38;j++){
+const x=i/40*1.65,z=(j/38-.5)*2.25;
+const fore=((x-.83)/.88)**2+((z+.43-.26*x)/.63)**2;
+const hind=((x-.64)/.68)**2+((z-.48+.13*x)/.63)**2;
+const edge=Math.min(fore,hind);if(edge>1)continue;
+const vein=Math.abs(Math.sin(Math.atan2(z+.07,x)*15+.45*x))<.12;
+const c=edge>.88?1:edge>.77?15:vein?15:((i+j)%9===0?3:14);
+emit(side*x*scale,.045*Math.sin(x*4)*scale,z*scale,.038*scale,c,side);
+}}
+for(let i=0;i<23;i++){const z=(i/22-.5)*1.08;emit(0,.06*scale,z*scale,.075*scale,i%4===0?2:1,0);}
+for(const side of [-1,1])for(let i=0;i<9;i++){const a=i/8;emit(side*a*.24*scale,.06*scale,(-.52-a*.35)*scale,.025*scale,1,0);}
+const end=B.count();
+parts.push({start,end,at:()=>[0,0,0],morph(d,orig,t){
+const a=t*.58+offset,flap=(.15+.92*Math.sin(t*TAU*2.2+offset)),heading=a+.7;
+const cx=origin[0]+Math.cos(a)*.85*scale,cy=origin[1]+Math.sin(t*2.1+offset)*.24*scale,cz=origin[2]+Math.sin(a)*.85*scale;
+for(let i=start;i<end;i++){const j=i*16,x=orig[j],y=orig[j+1],z=orig[j+2],side=hinges[i-start],ang=side*flap,xx=x*Math.cos(ang)-y*Math.sin(ang),yy=x*Math.sin(ang)+y*Math.cos(ang);d[j]=cx+xx*Math.cos(heading)+z*Math.sin(heading);d[j+1]=cy+yy;d[j+2]=cz-xx*Math.sin(heading)+z*Math.cos(heading);}
+}});
+}
+function butterflyGarden(seed){const {B,S}=base(seed),parts=[];island(S);for(let i=0;i<18;i++){const a=i*2.4,x=Math.cos(a)*(2+i%3*.5),z=Math.sin(a)*(2+i%3*.4);tube(S,[x,.1,z],[x,.65,z],.055,grass,.12);for(let k=0;k<5;k++){const q=k*TAU/5;ball(S,[x+Math.cos(q)*.17,.7,z+Math.sin(q)*.17],.14,i%2?red:purple,.1);}ball(S,[x,.79,z],.1,gold,.08);}S.bake();morpho(B,parts,[0,2.1,0],1,0);morpho(B,parts,[-2,1.5,-1],.42,2);morpho(B,parts,[2,1.7,1],.46,4);return finish(B,parts,{target:[0,1.65,0],dist:10,pitch:.45,yaw:.25});}
+
+window.PARK_SCENES=[{id:'butterfly',name:'🦋 Morpho Garden',seed:12,build:butterflyGarden},{id:'park',name:'🗺️ Splattastic Park',seed:11,build:park},{id:'dark',name:'💎 Crystal Caverns',seed:10,build:dark},{id:'coaster',name:'🎢 Thunder Trail',seed:7,build:coaster},{id:'wheel',name:'🎡 Starlight Wheel',seed:8,build:wheel},{id:'castle',name:'🏰 Fireworks Kingdom',seed:9,build:castle}];
 })();
