@@ -1,0 +1,1 @@
+{"name":"splattastic","private":true,"scripts":{"build":"node build.cjs"},"dependencies":{"@shapeshift-labs/ink-studio":"github:siliconjungle/shapeshift-labs-ink-studio"}}
