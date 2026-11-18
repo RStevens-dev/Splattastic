@@ -1,1 +1,2 @@
 const fs=require('node:fs');const ink=require('@shapeshift-labs/ink-studio');fs.mkdirSync('dist',{recursive:true});fs.copyFileSync('index.html','dist/index.html');fs.writeFileSync('dist/engine.js',ink.bundle()+'\nconst SCENES=[];\n'+ink.demos()+'\nwindow.INK={SCENES,makeBuilder,makeSculpt,KIT};');fs.copyFileSync(require.resolve('@shapeshift-labs/ink-studio/package.json').replace(/package\.json$/,'LICENSE'),'dist/LICENSE');
+fs.copyFileSync('park.js','dist/park.js');
